@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Title</title>
+<style type="text/css">
+.divcss5 {
+	width: 1000px;
+	height: 500px;
+	border: 1px solid #F00;
+	text-align: center;
+	overflow: auto
+}
+
+.divcss6 {
+	margin: 30px auto;
+	text-align: center;
+	width: 1000px;
+	height: 500px;
+	border: 1px solid #F00;
+	overflow: auto
+}
+</style>
+<script>
+	var websocket = null;
+	//判断当前浏览器是否支持WebSocket
+	if ('WebSocket' in window) {
+		//这里ws://192.168.1.111:8080/websocket 写自己的ip和端口号
+		websocket = new WebSocket("ws://localhost:8080/websocket");
+	} else {
+		alert('Not support websocket')
+	}
+
+	//连接发生错误的回调方法
+	websocket.onerror = function() {
+		setMessageInnerHTML("error");
+	};
+
+	//连接成功建立的回调方法
+	websocket.onopen = function(event) {
+		setMessageInnerHTML("系统消息：open");
+	}
+
+	//接收到消息的回调方法
+	websocket.onmessage = function(event) {
+		/* if (event.data.indexOf("user_count") != -1) {
+			var user_num = document.getElementById("user_num");
+			var jsonLength = 0;
+			var arr = event.data.split("=");
+			for ( var i in arr) {
+				jsonLength++;
+			} */
+		var jsonobj = JSON.parse(event.data);
+		user_num.innerHTML = jsonobj.user_count;
+		if (jsonobj.data != "") {
+
+			setMessageInnerHTML(jsonobj.data);
+
+		}
+	}
+
+	//连接关闭的回调方法
+	websocket.onclose = function() {
+		setMessageInnerHTML("close");
+	}
+
+	//监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+	window.onbeforeunload = function() {
+		websocket.close();
+	}
+
+	//将消息显示在网页上
+	function setMessageInnerHTML(innerHTML) {
+		if (innerHTML == "系统消息：连接成功！") {
+			var id = document.getElementById('user_num').innerText;
+			document.getElementById('user_name').innerHTML += id;
+		}
+		var userid = document.getElementById('user_name').innerHTML;
+		document.getElementById('message').innerHTML += '&nbsp' + "用户" + userid
+				+ ":" + innerHTML + '<br/>';
+	}
+
+	//关闭连接
+	function closeWebSocket() {
+		websocket.close();
+	}
+
+	//发送消息
+	function send() {
+		var message = document.getElementById('text').value;
+
+		websocket.send(message);
+	}
+</script>
+</head>
+<body>
+	<div style="display: none" id="user_name"></div>
+	<div
+		style="width: 800px; height: 600px; margin: 30px auto; text-align: center">
+		<!-- <h2>程序鸭聊天室</h2> -->
+		<div style="width: 800px; border: 1px solid #16982b; height: 500px;">
+			<div
+				style="width: 200px; height: 500px; float: left; text-align: left;">
+				<p>
+					<span>当前在线:</span><span id="user_num">0</span>
+				</p>
+				<div id="user_list" style="overflow: auto;"></div>
+			</div>
+			<div
+				style="width: 598px; border: 1px solid #16982b; height: 500px; overflow: scroll; float: left;">
+				<h3 id="welcome_info">Welcome</h3>
+				<div id="message" style="text-align: left"></div>
+			</div>
+		</div>
+		<br>
+		<div style="text-align: center">
+			<textarea id="text" rows="6" cols="50"></textarea>
+			<br>
+			<button onclick="send()">Send</button>
+			<button onclick="closeWebSocket()">Close</button>
+		</div>
+	</div>
+</body>
+</html>
